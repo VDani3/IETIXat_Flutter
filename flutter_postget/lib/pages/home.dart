@@ -32,9 +32,30 @@ class _HomeState extends State<Home> {
           child: MyAppBar(),
         ),
         body: Container(
-          child: appData.url == "" ? Expanded(child: Text("hola", style: TextStyle(),)) : chat_column(controller: controller),
+          child: appData.url == "" ? SampleText() : chat_column(controller: controller),
         ));
   }
+
+  Container SampleText() => Container(
+    
+    child: Container(
+      padding: EdgeInsets.only(top: 50, left: 10, right: 10),
+      child: Column(
+        children: [
+          Text(
+            "Hello, I'm Laphi, an AI powered by Ollama! \nThank you for wanting to talk to me ^·^\nI'll try to answer your questions as best as I can! \nBefore we start, specify the IP address and port you want to connect to by pressing the button in the top left corner, please.", 
+            style: TextStyle(color: Color.fromARGB(255, 88, 88, 88), fontSize: 14)
+          ),
+          Container(
+            padding: EdgeInsets.only(top: 16),
+            height: MediaQuery.of(context).size.height/2.5,
+            child: Image(image: AssetImage("assets/images/laphi.png"),)
+          )
+        ],
+      ),
+      alignment: Alignment.topCenter,
+    )
+  );
 }
 
 

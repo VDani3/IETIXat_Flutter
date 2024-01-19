@@ -21,7 +21,7 @@ class AppData with ChangeNotifier {
 
   List<String> responses = [];
 
-  String url = "";
+  String url = "http://192.168.18.115:3000/data";
 
   dynamic dataGet;
   dynamic dataPost;
@@ -59,13 +59,13 @@ class AppData with ChangeNotifier {
           completer.complete();
         },
         onError: (error) {
-          addTextToList("Error :(");
+          addErrorMessage();
           completer.completeError(
               "Error del servidor (appData/loadHttpGetByChunks): $error");
         },
       );
     } catch (e) {
-      addTextToList("Error :(");
+      addErrorMessage();
       completer.completeError("Excepció (appData/loadHttpGetByChunks): $e");
     }
 
@@ -80,19 +80,19 @@ class AppData with ChangeNotifier {
     var request = http.MultipartRequest('POST', Uri.parse(url));
 
     // Add JSON data as part of the form
-    request.fields['type'] = 'conversa';
-    request.fields['text'] = data;
+    request.fields['data'] = '{"type":"conversa","text":"$data"}';
 
     try {
       var response = await request.send();
-      var dataPost = "";
-      addTextToList(dataPost);
+      addTextToList("...");
 
       // Listen to each chunk of data
       response.stream.transform(utf8.decoder).listen(
         (data) {
-          // Update dataPost with the latest data
-          dataPost += data;
+          if (responses[responses.length - 1] == "...") {
+            responses[responses.length - 1] = "";
+          }
+          responses[responses.length - 1] += data;
         },
         onDone: () {
           if (response.statusCode == 200) {
@@ -101,28 +101,32 @@ class AppData with ChangeNotifier {
             canSendMessage = true;
             completer.complete();
           } else {
-            addTextToList("Error :(");
+            addErrorMessage();
             // La solicitud ha fallado
             completer.completeError(
                 "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
           }
         },
         onError: (error) {
-          addTextToList("Error :(");
+          addErrorMessage();
           completer.completeError(
               "Error del servidor (appData/loadHttpPostByChunks): $error");
         },
       );
     } catch (e) {
-      addTextToList("Error :(");
+      addErrorMessage();
       completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
     }
 
+    if (responses.length %2 == 0) {
+        addErrorMessage();
+    }
     canSendMessage = true;
     loadingPost = false;
     return completer.future;
   }
 
+  //Send Image
   Future<void> loadFotoHttpPostByChunks(String url, String msn) async {
     bool loadingPost = true;
     var completer = Completer<void>();
@@ -130,30 +134,29 @@ class AppData with ChangeNotifier {
     String _selectedImageString = "";
 
     final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       final Uint8List bytes = await pickedFile.readAsBytes();
       final img.Image image = img.decodeImage(Uint8List.fromList(bytes))!;
-      final String base64String = base64Encode(Uint8List.fromList(img.encodePng(image)));
+      final String base64String =
+          base64Encode(Uint8List.fromList(img.encodePng(image)));
       _selectedImageString = base64String;
-      
-      var headers = {'Content-Type': 'application/json',};
-      var body = {'type': 'image', 'text': msn, 'img': image};
 
-      request.fields['type'] = 'conversa';
-      request.fields['text'] = msn;
-      request.fields['image'] = _selectedImageString;
+      request.fields['data'] =
+          '{"type":"image","text":"$msn", "image":"$_selectedImageString"}';
 
       try {
         var response = await request.send();
-        var dataPost = "";
-        addTextToList(dataPost);
+        addTextToList("...");
 
         // Listen to each chunk of data
         response.stream.transform(utf8.decoder).listen(
           (data) {
-            responses[responses.length-1] += data;
+            if (responses[responses.length - 1] == "...") {
+              responses[responses.length - 1] = "";
+            }
+            responses[responses.length - 1] += data;
           },
           onDone: () {
             if (response.statusCode == 200) {
@@ -163,28 +166,31 @@ class AppData with ChangeNotifier {
               completer.complete();
               loadingPost = false;
             } else {
-              addTextToList("Error :(");
+              addErrorMessage();
               // La solicitud ha fallado
               completer.completeError(
                   "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
             }
           },
           onError: (error) {
-            addTextToList("Error :(");
+            addErrorMessage();
             completer.completeError(
                 "Error del servidor (appData/loadHttpPostByChunks): $error");
           },
         );
       } catch (e) {
-        addTextToList("Error :(");
+        addErrorMessage();
         completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
       }
-    canSendMessage = true;
-    loadingPost = false;
-    return completer.future;
-  }
-}
 
+      if (responses.length %2 == 0) {
+        addErrorMessage();
+      }
+      canSendMessage = true;
+      loadingPost = false;
+      return completer.future;
+    }
+  }
 
   // Funció per fer carregar dades d'un arxiu json de la carpeta 'assets'
   Future<dynamic> readJsonAsset(String filePath) async {
@@ -200,5 +206,10 @@ class AppData with ChangeNotifier {
     } catch (e) {
       throw Exception("Excepció (appData/readJsonAsset): $e");
     }
+  }
+
+  //Funcio per dir error
+  void addErrorMessage() {
+    responses[responses.length - 1] = "Error";
   }
 }

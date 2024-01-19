@@ -26,10 +26,18 @@ class MyAppBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(
-            Icons.menu,
-            color: Colors.white,
-            size: 30.0,
+          GestureDetector(
+            child: Container(
+              color: Colors.transparent,
+              child: Icon(
+                Icons.keyboard_control_outlined,
+                color: Colors.white,
+                size: 30.0,
+              ),
+            ),
+            onTap: () {
+              
+            },
           ),
           Text(
             'Chat',
@@ -46,7 +54,7 @@ class MyAppBar extends StatelessWidget {
               size: 30.0,
             ),
             onTap: () {
-              if (appData.loadingGet == false && appData.loadingPost == false && appData.loadingFile == false){
+              if (appData.loadingGet == false && appData.loadingPost == false && appData.loadingFile == false ){
                 appData.canSendMessage = true;
                 appData.clearMessages();
               }
