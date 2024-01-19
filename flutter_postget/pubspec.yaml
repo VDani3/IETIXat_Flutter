@@ -1,5 +1,5 @@
-name: flutter_postget
-description: A new Flutter project.
+name: xatieti_jd
+description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -39,7 +39,9 @@ dependencies:
   provider: ^6.0.5
   http: ^1.1.2
   file_picker: ^6.1.1
+  image_picker: ^0.8.6
   http_parser: ^4.0.2
+  image: ^3.0.1
 
 dev_dependencies:
   flutter_test:

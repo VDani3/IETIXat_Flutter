@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 
 class AppData with ChangeNotifier {
   // Access appData globaly with:
@@ -19,6 +20,8 @@ class AppData with ChangeNotifier {
   bool canSendMessage = true;
 
   List<String> responses = [];
+
+  String url = "";
 
   dynamic dataGet;
   dynamic dataPost;
@@ -56,11 +59,13 @@ class AppData with ChangeNotifier {
           completer.complete();
         },
         onError: (error) {
+          addTextToList("Error :(");
           completer.completeError(
               "Error del servidor (appData/loadHttpGetByChunks): $error");
         },
       );
     } catch (e) {
+      addTextToList("Error :(");
       completer.completeError("Excepció (appData/loadHttpGetByChunks): $e");
     }
 
@@ -80,8 +85,8 @@ class AppData with ChangeNotifier {
 
     try {
       var response = await request.send();
-
       var dataPost = "";
+      addTextToList(dataPost);
 
       // Listen to each chunk of data
       response.stream.transform(utf8.decoder).listen(
@@ -96,53 +101,90 @@ class AppData with ChangeNotifier {
             canSendMessage = true;
             completer.complete();
           } else {
+            addTextToList("Error :(");
             // La solicitud ha fallado
             completer.completeError(
                 "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
           }
         },
         onError: (error) {
+          addTextToList("Error :(");
           completer.completeError(
               "Error del servidor (appData/loadHttpPostByChunks): $error");
         },
       );
     } catch (e) {
+      addTextToList("Error :(");
       completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
     }
 
+    canSendMessage = true;
+    loadingPost = false;
     return completer.future;
   }
 
-  Future<String> loadFotoHttpPostByChunks(String url, String msn) async {
-    final imagePicker =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    
-    if (imagePicker == null) {
-      throw Exception("Error");
-    }
-    
-    File image = File(imagePicker!.path);
-    
-    var headers = {
-      'Content-Type': 'application/json',
-    };
+  Future<void> loadFotoHttpPostByChunks(String url, String msn) async {
+    bool loadingPost = true;
+    var completer = Completer<void>();
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+    String _selectedImageString = "";
 
-    var body = {'type': 'image', 'text': msn, 'img': image};
+    final picker = ImagePicker();
+    final pickedFile = await picker.getImage(source: ImageSource.gallery);
 
-    var response = await http.post(Uri.parse(url),
-        headers: headers, body: jsonEncode(body));
+    if (pickedFile != null) {
+      final Uint8List bytes = await pickedFile.readAsBytes();
+      final img.Image image = img.decodeImage(Uint8List.fromList(bytes))!;
+      final String base64String = base64Encode(Uint8List.fromList(img.encodePng(image)));
+      _selectedImageString = base64String;
+      
+      var headers = {'Content-Type': 'application/json',};
+      var body = {'type': 'image', 'text': msn, 'img': image};
 
-    if (response.statusCode == 200) {
-      // La solicitud ha sido exitosa
-      print(response.body);
-      addTextToList(response.body);
-      return response.body;
-    } else {
-      // La solicitud ha fallado
-      throw Exception(
-          "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
-    }
+      request.fields['type'] = 'conversa';
+      request.fields['text'] = msn;
+      request.fields['image'] = _selectedImageString;
+
+      try {
+        var response = await request.send();
+        var dataPost = "";
+        addTextToList(dataPost);
+
+        // Listen to each chunk of data
+        response.stream.transform(utf8.decoder).listen(
+          (data) {
+            responses[responses.length-1] += data;
+          },
+          onDone: () {
+            if (response.statusCode == 200) {
+              // La solicitud ha sido exitosa
+              print(dataPost);
+              canSendMessage = true;
+              completer.complete();
+              loadingPost = false;
+            } else {
+              addTextToList("Error :(");
+              // La solicitud ha fallado
+              completer.completeError(
+                  "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
+            }
+          },
+          onError: (error) {
+            addTextToList("Error :(");
+            completer.completeError(
+                "Error del servidor (appData/loadHttpPostByChunks): $error");
+          },
+        );
+      } catch (e) {
+        addTextToList("Error :(");
+        completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
+      }
+    canSendMessage = true;
+    loadingPost = false;
+    return completer.future;
   }
+}
+
 
   // Funció per fer carregar dades d'un arxiu json de la carpeta 'assets'
   Future<dynamic> readJsonAsset(String filePath) async {
