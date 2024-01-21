@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:xatieti_jd/other/app_data.dart';
@@ -52,6 +54,10 @@ class chat_column extends StatelessWidget {
                               child: index % 2 == 0 ? Text("You", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),) : Text("Laphi (XatIETI)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))
                             ),
                             Text(appData.responses[index]),
+                            SizedBox(height: 8,),
+                            Container(
+                              child: appData.responseImages[index] != "" ? Image.file(File(appData.responseImages[index]), height: 200,) : Text(''),
+                            )
                           ],
                         ))),
                   ],

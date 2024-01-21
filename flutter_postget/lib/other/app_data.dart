@@ -20,8 +20,9 @@ class AppData with ChangeNotifier {
   bool canSendMessage = true;
 
   List<String> responses = [];
+  List<String> responseImages = [];
 
-  String url = "http://192.168.18.115:3000/data";
+  String url = "";
 
   dynamic dataGet;
   dynamic dataPost;
@@ -29,47 +30,29 @@ class AppData with ChangeNotifier {
 
   void addTextToList(String text) {
     responses.add(text);
+    addImageToList("");
+    notifyListeners();
+  }
+
+  void addImageToList(String path) {
+    if (responseImages.length == responses.length) {
+      responseImages[responseImages.length -2] = path;
+    } else {
+      responseImages.add(path);
+    }
+    print(path);
     notifyListeners();
   }
 
   void clearMessages() {
     responses.clear();
+    responseImages.clear();
     notifyListeners();
   }
 
-  // Funció per fer crides tipus 'GET' i agafar la informació a mida que es va rebent
-  Future<void> loadHttpGetByChunks(String url) async {
-    var httpClient = HttpClient();
-    var completer = Completer<void>();
-
-    try {
-      var request = await httpClient.getUrl(Uri.parse(url));
-      var response = await request.close();
-
-      dataGet = "";
-
-      // Listen to each chunk of data
-      response.transform(utf8.decoder).listen(
-        (data) {
-          // Aquí rep cada un dels troços de dades que envia el servidor amb 'res.write'
-          dataGet += data;
-          notifyListeners();
-        },
-        onDone: () {
-          completer.complete();
-        },
-        onError: (error) {
-          addErrorMessage();
-          completer.completeError(
-              "Error del servidor (appData/loadHttpGetByChunks): $error");
-        },
-      );
-    } catch (e) {
-      addErrorMessage();
-      completer.completeError("Excepció (appData/loadHttpGetByChunks): $e");
-    }
-
-    return completer.future;
+  void setUrl(String link) {
+    url = link + "/data";
+    notifyListeners();
   }
 
   // Funció per fer crides tipus 'POST' amb un arxiu adjunt,
@@ -78,13 +61,12 @@ class AppData with ChangeNotifier {
     bool loadingPost = true;
     var completer = Completer<void>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
-
+    addTextToList("...");
     // Add JSON data as part of the form
     request.fields['data'] = '{"type":"conversa","text":"$data"}';
 
     try {
       var response = await request.send();
-      addTextToList("...");
 
       // Listen to each chunk of data
       response.stream.transform(utf8.decoder).listen(
@@ -118,7 +100,7 @@ class AppData with ChangeNotifier {
       completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
     }
 
-    if (responses.length %2 == 0) {
+    if (responses[responses.length-1] == "...") {
         addErrorMessage();
     }
     canSendMessage = true;
@@ -132,11 +114,13 @@ class AppData with ChangeNotifier {
     var completer = Completer<void>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
     String _selectedImageString = "";
+    addTextToList("...");
 
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      addImageToList(pickedFile.path);
       final Uint8List bytes = await pickedFile.readAsBytes();
       final img.Image image = img.decodeImage(Uint8List.fromList(bytes))!;
       final String base64String =
@@ -148,7 +132,6 @@ class AppData with ChangeNotifier {
 
       try {
         var response = await request.send();
-        addTextToList("...");
 
         // Listen to each chunk of data
         response.stream.transform(utf8.decoder).listen(
@@ -169,26 +152,30 @@ class AppData with ChangeNotifier {
               addErrorMessage();
               // La solicitud ha fallado
               completer.completeError(
-                  "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
+                  "Error del servidor (appData/loadFotoHttpPostByChunks): ${response.reasonPhrase}");
             }
           },
           onError: (error) {
             addErrorMessage();
             completer.completeError(
-                "Error del servidor (appData/loadHttpPostByChunks): $error");
+                "Error del servidor (appData/loadFotoHttpPostByChunks): $error");
           },
         );
       } catch (e) {
         addErrorMessage();
-        completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
+        completer.completeError("Excepción (appData/loadFotoHttpPostByChunks): $e");
       }
 
-      if (responses.length %2 == 0) {
+      if (responses[responses.length-1] == "...") {
         addErrorMessage();
       }
       canSendMessage = true;
       loadingPost = false;
       return completer.future;
+    }
+
+    if (responses[responses.length-1] == "...") {
+      addErrorMessage();
     }
   }
 

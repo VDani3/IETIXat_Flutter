@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:xatieti_jd/other/app_data.dart';
 
 class MyAppBar extends StatelessWidget {
+  TextEditingController _controller = TextEditingController();
   @override
   Widget build(BuildContext context) {
     AppData appData = Provider.of<AppData>(context);
@@ -36,7 +37,7 @@ class MyAppBar extends StatelessWidget {
               ),
             ),
             onTap: () {
-              
+              _displayDialog(context, appData);
             },
           ),
           Text(
@@ -64,4 +65,39 @@ class MyAppBar extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _displayDialog(BuildContext context, AppData appData) async {
+    return showDialog(
+      context: context, 
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Specify the server IP:Port'),
+          content: TextField(
+            controller: _controller,
+            onSubmitted: (value) {
+              if (value != "") {
+                appData.setUrl(value);
+              }
+              Navigator.pop(context);
+            },
+            decoration: InputDecoration(hintText: "http://192.168.x.x:3000"),
+          ),
+          actions: <Widget>[
+            MaterialButton(
+              textColor: Colors.white,
+              color: Colors.blue,
+              child: Text('OK'),
+              onPressed: () {
+                if (_controller.text != "") {
+                  appData.setUrl(_controller.text);
+                }
+                Navigator.pop(context);
+              }
+            )
+          ],
+        );
+      }
+    );
+  }
 }
+
