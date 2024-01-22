@@ -36,11 +36,10 @@ class AppData with ChangeNotifier {
 
   void addImageToList(String path) {
     if (responseImages.length == responses.length) {
-      responseImages[responseImages.length -2] = path;
+      responseImages[responseImages.length - 2] = path;
     } else {
       responseImages.add(path);
     }
-    print(path);
     notifyListeners();
   }
 
@@ -75,15 +74,15 @@ class AppData with ChangeNotifier {
             responses[responses.length - 1] = "";
           }
           responses[responses.length - 1] += data;
+          notifyListeners();
         },
         onDone: () {
           if (response.statusCode == 200) {
             // La solicitud ha sido exitosa
-            print(dataPost);
             canSendMessage = true;
             completer.complete();
           } else {
-            addErrorMessage();
+            //addErrorMessage();
             // La solicitud ha fallado
             completer.completeError(
                 "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
@@ -100,9 +99,6 @@ class AppData with ChangeNotifier {
       completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
     }
 
-    if (responses[responses.length-1] == "...") {
-        addErrorMessage();
-    }
     canSendMessage = true;
     loadingPost = false;
     return completer.future;
@@ -140,16 +136,16 @@ class AppData with ChangeNotifier {
               responses[responses.length - 1] = "";
             }
             responses[responses.length - 1] += data;
+            notifyListeners();
           },
           onDone: () {
             if (response.statusCode == 200) {
               // La solicitud ha sido exitosa
-              print(dataPost);
               canSendMessage = true;
               completer.complete();
               loadingPost = false;
             } else {
-              addErrorMessage();
+              //addErrorMessage();
               // La solicitud ha fallado
               completer.completeError(
                   "Error del servidor (appData/loadFotoHttpPostByChunks): ${response.reasonPhrase}");
@@ -163,18 +159,16 @@ class AppData with ChangeNotifier {
         );
       } catch (e) {
         addErrorMessage();
-        completer.completeError("Excepción (appData/loadFotoHttpPostByChunks): $e");
+        completer
+            .completeError("Excepción (appData/loadFotoHttpPostByChunks): $e");
       }
 
-      if (responses[responses.length-1] == "...") {
-        addErrorMessage();
-      }
       canSendMessage = true;
       loadingPost = false;
       return completer.future;
     }
 
-    if (responses[responses.length-1] == "...") {
+    if (responses[responses.length - 1] == "...") {
       addErrorMessage();
     }
   }
