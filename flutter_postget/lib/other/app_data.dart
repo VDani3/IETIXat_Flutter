@@ -58,6 +58,7 @@ class AppData with ChangeNotifier {
   //i agafar la informació a mida que es va rebent
   Future<void> loadHttpPostByChunks(String url, String data) async {
     bool loadingPost = true;
+    String responseMsn = "";
     var completer = Completer<void>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
     addTextToList("...");
@@ -73,10 +74,14 @@ class AppData with ChangeNotifier {
           if (responses[responses.length - 1] == "...") {
             responses[responses.length - 1] = "";
           }
-          responses[responses.length - 1] += data;
-          notifyListeners();
+          responseMsn += data;
         },
-        onDone: () {
+        onDone: () async {
+          for (int i = 0; i < responseMsn.length-1; i++) {
+            responses[responses.length - 1] += responseMsn[i];
+            notifyListeners();
+            await Future.delayed(Duration(milliseconds: 50));
+          }
           if (response.statusCode == 200) {
             // La solicitud ha sido exitosa
             canSendMessage = true;
@@ -110,6 +115,7 @@ class AppData with ChangeNotifier {
     var completer = Completer<void>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
     String _selectedImageString = "";
+    String responseMsn = "";
     addTextToList("...");
 
     final picker = ImagePicker();
@@ -135,10 +141,16 @@ class AppData with ChangeNotifier {
             if (responses[responses.length - 1] == "...") {
               responses[responses.length - 1] = "";
             }
-            responses[responses.length - 1] += data;
+            responseMsn += data;
             notifyListeners();
           },
-          onDone: () {
+          onDone: () async {
+            for (int i = 0; i < responseMsn.length-1; i++) {
+              responses[responses.length - 1] += responseMsn[i];
+              notifyListeners();
+              await Future.delayed(Duration(milliseconds: 50));
+            }
+            responses[responses.length - 1] += ".";
             if (response.statusCode == 200) {
               // La solicitud ha sido exitosa
               canSendMessage = true;
