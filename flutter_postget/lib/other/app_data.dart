@@ -78,10 +78,15 @@ class AppData with ChangeNotifier {
         },
         onDone: () async {
           for (int i = 0; i < responseMsn.length-1; i++) {
-            responses[responses.length - 1] += responseMsn[i];
-            notifyListeners();
-            await Future.delayed(Duration(milliseconds: 50));
-          }
+              canSendMessage = false;
+              loadingPost = true;
+              responses[responses.length - 1] += responseMsn[i];
+              notifyListeners();
+              await Future.delayed(Duration(milliseconds: 50));
+            }
+            canSendMessage = true;
+            loadingPost = false;
+            responses[responses.length - 1] += ".";
           if (response.statusCode == 200) {
             // La solicitud ha sido exitosa
             canSendMessage = true;
@@ -146,10 +151,14 @@ class AppData with ChangeNotifier {
           },
           onDone: () async {
             for (int i = 0; i < responseMsn.length-1; i++) {
+              canSendMessage = false;
+              loadingPost = true;
               responses[responses.length - 1] += responseMsn[i];
               notifyListeners();
               await Future.delayed(Duration(milliseconds: 50));
             }
+            canSendMessage = true;
+            loadingPost = false;
             responses[responses.length - 1] += ".";
             if (response.statusCode == 200) {
               // La solicitud ha sido exitosa

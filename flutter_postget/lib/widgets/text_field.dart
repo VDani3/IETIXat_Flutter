@@ -72,7 +72,7 @@ class text_field extends StatelessWidget {
             decoration: BoxDecoration(color: Colors.transparent),
             ),
             onTap: () {
-              if (appData.canSendMessage) {
+              if (appData.canSendMessage && controller.text != "") {
                 String value = controller.text;
                 controller.text = "";
                 appData.canSendMessage = false;
